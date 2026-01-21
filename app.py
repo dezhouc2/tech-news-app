@@ -1,21 +1,17 @@
 """
-Tech News Summarizer - A Streamlit app that aggregates and summarizes the hottest tech news.
+Tech news aggregator with AI summaries.
+Pulls from HN and NewsAPI, uses GPT-4o-mini for summaries.
 """
 
 import streamlit as st
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Optional
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
 
-# Load environment variables from .env file
 load_dotenv()
-
-# =============================================================================
-# Configuration
-# =============================================================================
 
 st.set_page_config(
     page_title="Tech Pulse | Hot Tech News",
@@ -191,13 +187,9 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-# =============================================================================
-# Data Fetching Functions
-# =============================================================================
-
-@st.cache_data(ttl=300)  # Cache for 5 minutes
+@st.cache_data(ttl=300)
 def fetch_hackernews_top_stories(limit: int = 30) -> list[dict]:
-    """Fetch top stories from Hacker News API."""
+    """Fetch top stories from HN."""
     try:
         # Get top story IDs
         response = requests.get(
@@ -234,7 +226,7 @@ def fetch_hackernews_top_stories(limit: int = 30) -> list[dict]:
 
 @st.cache_data(ttl=300)
 def fetch_newsapi_tech_news(api_key: str, limit: int = 20) -> list[dict]:
-    """Fetch tech news from NewsAPI."""
+    """Fetch from NewsAPI (needs key)."""
     if not api_key:
         return []
     
@@ -276,12 +268,8 @@ def fetch_newsapi_tech_news(api_key: str, limit: int = 20) -> list[dict]:
         return []
 
 
-# =============================================================================
-# AI Summarization
-# =============================================================================
-
 def summarize_with_ai(title: str, url: str, openai_api_key: str) -> Optional[str]:
-    """Generate an AI summary for a news article."""
+    """Call GPT to summarize the article."""
     if not openai_api_key:
         return None
     
@@ -312,12 +300,7 @@ def summarize_with_ai(title: str, url: str, openai_api_key: str) -> Optional[str
         return f"Summary unavailable: {str(e)[:50]}"
 
 
-# =============================================================================
-# UI Components
-# =============================================================================
-
 def render_header():
-    """Render the main header."""
     st.markdown("""
     <div class="main-header">
         <h1>⚡ Tech Pulse</h1>
@@ -327,7 +310,6 @@ def render_header():
 
 
 def render_stats(stories: list[dict]):
-    """Render statistics cards."""
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
@@ -367,7 +349,6 @@ def render_stats(stories: list[dict]):
 
 
 def render_news_card(story: dict, index: int, openai_api_key: str):
-    """Render a single news card."""
     time_ago = get_time_ago(story.get("time", datetime.now()))
     
     st.markdown(f"""
@@ -404,7 +385,6 @@ def render_news_card(story: dict, index: int, openai_api_key: str):
 
 
 def get_time_ago(dt: datetime) -> str:
-    """Convert datetime to human-readable time ago string."""
     now = datetime.now()
     diff = now - dt
     
@@ -417,10 +397,6 @@ def get_time_ago(dt: datetime) -> str:
     else:
         return "just now"
 
-
-# =============================================================================
-# Main App
-# =============================================================================
 
 def main():
     render_header()
